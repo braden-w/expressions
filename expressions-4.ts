@@ -9,6 +9,8 @@ export const TabHandler = Extension.create({
 			isCursorAtStartOfListItem:
 				editor.isActive('listItem') &&
 				editor.state.selection.$from.parentOffset === 0,
+			indentListItem: () => editor.chain().sinkListItem('listItem').run(),
+			unindentListItem: () => editor.chain().liftListItem('listItem').run(),
 			insertTab: () =>
 				editor
 					.chain()
@@ -34,15 +36,14 @@ export const TabHandler = Extension.create({
 							return true;
 						})
 						.run();
+					return true;
 				}
 			},
-			indentListItem: () => editor.chain().sinkListItem('listItem').run(),
-			unindentListItem: () => editor.chain().liftListItem('listItem').run(),
 		});
 
 		return {
 			Tab: ({ editor }) => {
-				const { insertTab, isCursorAtStartOfListItem, indentListItem } =
+				const { isCursorAtStartOfListItem, indentListItem, insertTab } =
 					useTabEditor(editor);
 
 				if (isCursorAtStartOfListItem) {
@@ -58,9 +59,9 @@ export const TabHandler = Extension.create({
 
 			'Shift-Tab': ({ editor }) => {
 				const {
-					removeTabIfBehind,
 					isCursorAtStartOfListItem,
 					unindentListItem,
+					removeTabIfBehind,
 				} = useTabEditor(editor);
 
 				if (isCursorAtStartOfListItem) {

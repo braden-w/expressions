@@ -45,17 +45,29 @@ export const TabHandler = Extension.create({
 					}
 				}
 
-				const removeTabIfBehind = () =>
-					editor
-						.chain()
-						.command(({ tr }) => {
-							tr.delete(
-								editor.state.selection.$from.pos - 1,
-								editor.state.selection.$from.pos,
-							);
-							return true;
-						})
-						.run();
+				const removeTabIfBehind = () => {
+					const {
+						selection: { $from },
+						doc,
+					} = editor.state;
+
+					const isPreviousCharTab =
+						doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
+
+					if (isPreviousCharTab) {
+						editor
+							.chain()
+							.command(({ tr }) => {
+								tr.delete(
+									editor.state.selection.$from.pos - 1,
+									editor.state.selection.$from.pos,
+								);
+								return true;
+							})
+							.run();
+						return true;
+					}
+				};
 				removeTabIfBehind();
 				return true;
 			},
