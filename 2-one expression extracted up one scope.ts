@@ -1,4 +1,4 @@
-import { type Editor, Extension } from '@tiptap/core';
+import { Extension, type Editor } from '@tiptap/core';
 
 export const TabHandler = Extension.create({
 	name: 'tabHandler',
@@ -11,16 +11,14 @@ export const TabHandler = Extension.create({
 
 		return {
 			Tab: ({ editor }) => {
-				if (isCursorAtStartOfListItem(editor)) {
-					const indentListItem = () =>
-						editor.chain().sinkListItem('listItem').run();
-					const isIndentSuccess = indentListItem();
-					if (isIndentSuccess) {
-						return true;
-					}
+				const indentListItem = (editor: Editor) =>
+					editor.chain().sinkListItem('listItem').run();
+
+				if (isCursorAtStartOfListItem(editor) && indentListItem(editor)) {
+					return true;
 				}
 
-				const insertTab = () =>
+				const insertTab = (editor: Editor) =>
 					editor
 						.chain()
 						.command(({ tr }) => {
@@ -28,44 +26,34 @@ export const TabHandler = Extension.create({
 							return true;
 						})
 						.run();
-				insertTab();
+				insertTab(editor);
 				return true;
 			},
 
 			'Shift-Tab': ({ editor }) => {
-				if (isCursorAtStartOfListItem(editor)) {
-					const unindentListItem = () =>
-						editor.chain().liftListItem('listItem').run();
-					const isUnindentSuccess = unindentListItem();
-					if (isUnindentSuccess) {
-						return true;
-					}
+				const unindentListItem = (editor: Editor) =>
+					editor.chain().liftListItem('listItem').run();
+
+				if (isCursorAtStartOfListItem(editor) && unindentListItem(editor)) {
+					return true;
 				}
 
-				const removeTabIfBehind = () => {
-					const {
-						selection: { $from },
-						doc,
-					} = editor.state;
-
+				const removeTabIfBehindCursor = (editor: Editor) => {
+					const { $from } = editor.state.selection;
 					const isPreviousCharTab =
-						doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
+						editor.state.doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
 
 					if (isPreviousCharTab) {
 						editor
 							.chain()
 							.command(({ tr }) => {
-								tr.delete(
-									editor.state.selection.$from.pos - 1,
-									editor.state.selection.$from.pos,
-								);
+								tr.delete($from.pos - 1, $from.pos);
 								return true;
 							})
 							.run();
-						return true;
 					}
 				};
-				removeTabIfBehind();
+				removeTabIfBehindCursor(editor);
 				return true;
 			},
 		};

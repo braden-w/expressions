@@ -5,7 +5,7 @@ export const TabHandler = Extension.create({
 	addKeyboardShortcuts() {
 		const TAB_CHAR = '\u0009';
 
-		const useTabEditor = (editor: Editor) => ({
+		const createEditorIndentFunctionality = (editor: Editor) => ({
 			isCursorAtStartOfListItem:
 				editor.isActive('listItem') &&
 				editor.state.selection.$from.parentOffset === 0,
@@ -19,14 +19,10 @@ export const TabHandler = Extension.create({
 						return true;
 					})
 					.run(),
-			removeTabIfBehind: () => {
-				const {
-					selection: { $from },
-					doc,
-				} = editor.state;
-
+			removeTabIfBehindCursor: () => {
+				const { $from } = editor.state.selection;
 				const isPreviousCharTab =
-					doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
+					editor.state.doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
 
 				if (isPreviousCharTab) {
 					editor
@@ -36,21 +32,17 @@ export const TabHandler = Extension.create({
 							return true;
 						})
 						.run();
-					return true;
 				}
 			},
 		});
 
 		return {
 			Tab: ({ editor }) => {
-				const { isCursorAtStartOfListItem, indentListItem, insertTab } =
-					useTabEditor(editor);
+				const { isCursorAtStartOfListItem, insertTab, indentListItem } =
+					createEditorIndentFunctionality(editor);
 
-				if (isCursorAtStartOfListItem) {
-					const isIndentSuccess = indentListItem();
-					if (isIndentSuccess) {
-						return true;
-					}
+				if (isCursorAtStartOfListItem && indentListItem()) {
+					return true;
 				}
 
 				insertTab();
@@ -61,17 +53,14 @@ export const TabHandler = Extension.create({
 				const {
 					isCursorAtStartOfListItem,
 					unindentListItem,
-					removeTabIfBehind,
-				} = useTabEditor(editor);
+					removeTabIfBehindCursor,
+				} = createEditorIndentFunctionality(editor);
 
-				if (isCursorAtStartOfListItem) {
-					const isUnindentSuccess = unindentListItem();
-					if (isUnindentSuccess) {
-						return true;
-					}
+				if (isCursorAtStartOfListItem && unindentListItem()) {
+					return true;
 				}
 
-				removeTabIfBehind();
+				removeTabIfBehindCursor();
 				return true;
 			},
 		};

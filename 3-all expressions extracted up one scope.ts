@@ -1,4 +1,4 @@
-import { type Editor, Extension } from '@tiptap/core';
+import { Extension, type Editor } from '@tiptap/core';
 
 export const TabHandler = Extension.create({
 	name: 'tabHandler',
@@ -23,38 +23,26 @@ export const TabHandler = Extension.create({
 					return true;
 				})
 				.run();
-
-		const removeTabIfBehind = (editor: Editor) => {
-			const {
-				selection: { $from },
-				doc,
-			} = editor.state;
-
+		const removeTabIfBehindCursor = (editor: Editor) => {
+			const { $from } = editor.state.selection;
 			const isPreviousCharTab =
-				doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
+				editor.state.doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
 
 			if (isPreviousCharTab) {
 				editor
 					.chain()
 					.command(({ tr }) => {
-						tr.delete(
-							editor.state.selection.$from.pos - 1,
-							editor.state.selection.$from.pos,
-						);
+						tr.delete($from.pos - 1, $from.pos);
 						return true;
 					})
 					.run();
-				return true;
 			}
 		};
 
 		return {
 			Tab: ({ editor }) => {
-				if (isCursorAtStartOfListItem(editor)) {
-					const isIndentSuccess = indentListItem(editor);
-					if (isIndentSuccess) {
-						return true;
-					}
+				if (isCursorAtStartOfListItem(editor) && indentListItem(editor)) {
+					return true;
 				}
 
 				insertTab(editor);
@@ -62,14 +50,11 @@ export const TabHandler = Extension.create({
 			},
 
 			'Shift-Tab': ({ editor }) => {
-				if (isCursorAtStartOfListItem(editor)) {
-					const isUnindentSuccess = unindentListItem(editor);
-					if (isUnindentSuccess) {
-						return true;
-					}
+				if (isCursorAtStartOfListItem(editor) && unindentListItem(editor)) {
+					return true;
 				}
 
-				removeTabIfBehind(editor);
+				removeTabIfBehindCursor(editor);
 				return true;
 			},
 		};
