@@ -16,14 +16,10 @@ const useTabEditor = (editor: Editor) => ({
 				return true;
 			})
 			.run(),
-	removeTabIfBehind: () => {
-		const {
-			selection: { $from },
-			doc,
-		} = editor.state;
-
+	removeTabIfBehindCursor: () => {
+		const { $from } = editor.state.selection;
 		const isPreviousCharTab =
-			doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
+			editor.state.doc.textBetween($from.pos - 1, $from.pos) === TAB_CHAR;
 
 		if (isPreviousCharTab) {
 			editor
@@ -33,20 +29,16 @@ const useTabEditor = (editor: Editor) => ({
 					return true;
 				})
 				.run();
-			return true;
 		}
 	},
 });
 
 const Tab = ({ editor }) => {
-	const { isCursorAtStartOfListItem, indentListItem, insertTab } =
+	const { isCursorAtStartOfListItem, insertTab, indentListItem } =
 		useTabEditor(editor);
 
-	if (isCursorAtStartOfListItem) {
-		const isIndentSuccess = indentListItem();
-		if (isIndentSuccess) {
-			return true;
-		}
+	if (isCursorAtStartOfListItem && indentListItem()) {
+		return true;
 	}
 
 	insertTab();
@@ -54,16 +46,16 @@ const Tab = ({ editor }) => {
 };
 
 const ShiftTab = ({ editor }) => {
-	const { isCursorAtStartOfListItem, unindentListItem, removeTabIfBehind } =
-		useTabEditor(editor);
+	const {
+		isCursorAtStartOfListItem,
+		unindentListItem,
+		removeTabIfBehindCursor,
+	} = useTabEditor(editor);
 
-	if (isCursorAtStartOfListItem) {
-		const isUnindentSuccess = unindentListItem();
-		if (isUnindentSuccess) {
-			return true;
-		}
+	if (isCursorAtStartOfListItem && unindentListItem()) {
+		return true;
 	}
 
-	removeTabIfBehind();
+	removeTabIfBehindCursor();
 	return true;
 };
